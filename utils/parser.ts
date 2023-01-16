@@ -10,25 +10,6 @@ export function parseHTML(content: string): NodeListOf<HTMLTableElement>{
   return body.querySelectorAll('table');
 }
 
-export function download(data: any){
-  var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
-  var dlAnchorElem = document.createElement('a');
-  dlAnchorElem.setAttribute("href",     dataStr     );
-  dlAnchorElem.setAttribute("download", "data.json");
-  dlAnchorElem.click();
-}
-
-export function downloadAsJSON(content: string) {
-  const tables = parseHTML(content);
-  const payload: Object = {};
-  tables.forEach((table, index) => {
-    payload[`Table ${index}`] = htmlTableToJSON(table);
-  })
-
-  download(payload);
-}
-
-
 
 function getTableHeaders(table: HTMLTableElement){
   const headers: Array<string> = [];
@@ -43,6 +24,27 @@ function getTableHeaders(table: HTMLTableElement){
   return headers;
 }
 
+export function htmlTableToCSV(table: HTMLTableElement){
+    
+  const headers = getTableHeaders(table);
+  const data: any[] = []
+  Array.from(table.querySelectorAll('tr')).forEach(row => {
+    const dataRow = Array.from(row.querySelectorAll('td')).map(elem => {
+      if(elem.querySelector('a')){
+        return `${elem.textContent} : ${elem.querySelector('a')?.href}`;
+      } else {
+        return elem.textContent;
+      }
+    })
+    data.push(dataRow);
+  })
+
+  const csvArray = [headers, ...data];
+  let csvContent = "data:text/csv;charset=utf-8," 
+      + csvArray.map(e => e.join(",")).join("\n");
+
+  return csvContent;
+}
 
 export function htmlTableToJSON(table: HTMLTableElement){
   const headers = getTableHeaders(table);
